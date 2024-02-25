@@ -4,9 +4,14 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.pm.PackageManager;
+import android.media.AudioAttributes;
 import android.media.AudioFormat;
 import android.media.AudioManager;
+import android.media.AudioRecord;
 import android.media.AudioTrack;
+import android.media.MediaPlayer;
+import android.media.MediaRecorder;
 import android.os.Bundle;
 
 import com.google.android.gms.nearby.Nearby;
@@ -46,9 +51,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 
 // COED STARTS!
@@ -61,10 +71,31 @@ public class MainActivity extends AppCompatActivity {
     private AppBarConfiguration appBarConfiguration;
     private ActivityMainBinding binding;
 
+    public interface DataReceivedListener {
+        void onDataReceived(String endpointId, byte[] data);
+    }
+    private DataReceivedListener dataReceivedListener;
+    private List<String> connectedEndpointIds = new ArrayList<>();
+    private MediaPlayer mediaPlayer;
+    private File tempAudioFile;
+    private String userName = "Mario";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        startStreaming();
+
+        mediaPlayer = new MediaPlayer();
+        tempAudioFile = new File(getCacheDir(), "temp_audio_file");
+        if(!tempAudioFile.exists()){
+            try{
+                tempAudioFile.createNewFile();
+            } catch(IOException e){
+                e.printStackTrace();
+            }
+        }
+
 
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -88,13 +119,23 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        mediaPlayer.release();
+        tempAudioFile.delete();
+        stopStreaming();
+    }
+
     // "START" OF PERMISSION REQUEST
-    private void requestAllNeededPermissions(){
+    private void requestAllNeededPermissions() {
         ActivityCompat.requestPermissions(this, new String[]{
                 android.Manifest.permission.ACCESS_FINE_LOCATION,
                 android.Manifest.permission.BLUETOOTH_ADVERTISE,
                 android.Manifest.permission.BLUETOOTH_CONNECT,
-                android.Manifest.permission.BLUETOOTH_SCAN
+                android.Manifest.permission.BLUETOOTH_SCAN,
+                android.Manifest.permission.RECORD_AUDIO
         }, requestingCode);
     }
 
@@ -102,13 +143,12 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
-        if(requestCode == requestingCode){
-            if(grantResults.length >= 4){
+        if (requestCode == requestingCode) {
+            if (grantResults.length >= 5) {
                 Toast.makeText(this, "Permission Granted!", Toast.LENGTH_SHORT).show();
                 startAdvertising();
                 startDiscovery();
-            }
-            else{
+            } else {
                 Toast.makeText(this, "Permission denied :c", Toast.LENGTH_SHORT).show();
             }
         }
@@ -117,22 +157,20 @@ public class MainActivity extends AppCompatActivity {
     // END OF PERMISSION REQUEST
 
 
-
     // NEARBY CONNECTION! BABY WOO, ONLY TOOK NINE HOURS
     Strategy STRATEGY = Strategy.P2P_CLUSTER;
     String SERVICE_ID = "com.example.proxyverse.nearby_connection";
     Context CONTEXT = this;
 
 
-
     // Put yourself out there!
-    private void startAdvertising(){
+    private void startAdvertising() {
 
 
         AdvertisingOptions advertisingOptions = new AdvertisingOptions.Builder()
                 .setStrategy(STRATEGY).build();
         Nearby.getConnectionsClient(CONTEXT)
-                .startAdvertising("Mario", SERVICE_ID, connectionLifecycleCallback, advertisingOptions)
+                .startAdvertising(userName, SERVICE_ID, connectionLifecycleCallback, advertisingOptions)
                 .addOnSuccessListener(
                         (Void unused) -> {
                             // WE'RE ADVERTISING; YIPPEE
@@ -149,14 +187,15 @@ public class MainActivity extends AppCompatActivity {
     private final ConnectionLifecycleCallback connectionLifecycleCallback =
             new ConnectionLifecycleCallback() {
                 @Override
-                public void onConnectionInitiated(String endpointID, ConnectionInfo connectionInfo) {
+                public void onConnectionInitiated(String endpointId, ConnectionInfo connectionInfo) {
                     // Automatically accept connection on both sides
-                    Nearby.getConnectionsClient(CONTEXT).acceptConnection(endpointID, payloadCallback);
+                    connectedEndpointIds.add(endpointId);
+                    Nearby.getConnectionsClient(CONTEXT).acceptConnection(endpointId, payloadCallback);
                 }
 
                 @Override
                 public void onConnectionResult(String endpointId, ConnectionResolution result) {
-                    switch(result.getStatus().getStatusCode()){
+                    switch (result.getStatus().getStatusCode()) {
                         case 0: // ConnectionsStatusCodes.STATUS_OK
                             // we are connected. now time to send & recieve data
                             Toast.makeText(CONTEXT, "Connection Okay!", Toast.LENGTH_SHORT).show();
@@ -178,16 +217,21 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onDisconnected(String endpointId) {
                     // we've been disconnected. no more data can be sent or recieved
+                    connectedEndpointIds.remove(endpointId);
                 }
             };
-
 
 
     private final PayloadCallback payloadCallback =
             new PayloadCallback() {
                 @Override
                 public void onPayloadReceived(String endpointId, Payload payload) {
-                    onRecieve(endpointId, payload);
+                    if(payload.getType() == Payload.Type.BYTES && dataReceivedListener != null){
+                        byte[] data = payload.asBytes();
+                        dataReceivedListener.onDataReceived(endpointId, data);
+                        onDataRecieved(endpointId, data);
+                    }
+                    //onRecieve(endpointId, payload);
                 }
 
                 @Override
@@ -221,7 +265,7 @@ public class MainActivity extends AppCompatActivity {
                 public void onEndpointFound(String endpointId, DiscoveredEndpointInfo info) {
                     // endpoint found, lets request a connection
                     Nearby.getConnectionsClient(CONTEXT)
-                            .requestConnection("Mario", endpointId, connectionLifecycleCallback)
+                            .requestConnection(userName, endpointId, connectionLifecycleCallback)
                             .addOnSuccessListener(
                                     (Void unused) -> {
                                         // We have successfully sent a connection
@@ -243,7 +287,7 @@ public class MainActivity extends AppCompatActivity {
 
     // When we get a connection!
     //@Override
-    public void onConnectionInitiated(String endpointId, ConnectionInfo info){
+    public void onConnectionInitiated(String endpointId, ConnectionInfo info) {
         /*
         // Some alert code from: https://developers.google.com/nearby/connections/android/manage-connections
         new AlertDialog.Builder(CONTEXT_IGNORE_SECURITY)
@@ -256,8 +300,10 @@ public class MainActivity extends AppCompatActivity {
         new AlertDialog.Builder(CONTEXT)
                 .setTitle("Accept connection to " + info.getEndpointName())
                 .setMessage("Confirm the code matches on both devices: " + info.getAuthenticationDigits())
-                .setPositiveButton("Accept", (DialogInterface d, int which)->{})
-                .setNegativeButton("Decline", (DialogInterface d, int which)->{});
+                .setPositiveButton("Accept", (DialogInterface d, int which) -> {
+                })
+                .setNegativeButton("Decline", (DialogInterface d, int which) -> {
+                });
 
         Nearby.getConnectionsClient(CONTEXT)
                 .acceptConnection(endpointId, payloadCallback);
@@ -265,10 +311,76 @@ public class MainActivity extends AppCompatActivity {
 
 
 
-    private void onRecieve(String endpointId, Payload payload){
-
+    private void onDataRecieved(String endpointId, byte[] data) {
+        playAudioData(data);
     }
 
+    private void playAudioData(byte[] data) {
+        try {
+            FileOutputStream fos = new FileOutputStream(tempAudioFile);
+            fos.write(data);
+            fos.close();
+
+            mediaPlayer.reset();
+            mediaPlayer.setDataSource(tempAudioFile.getPath());
+            mediaPlayer.prepare();
+            mediaPlayer.start();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    // Send Mic Stream
+    private static final int SAMPLE_RATE = 44100;
+    private static final int CHANNEL_CONFIG = AudioFormat.CHANNEL_IN_MONO;
+    private static final int AUDIO_FORMAT = AudioFormat.ENCODING_PCM_16BIT;
+    private static final int BUFFER_SIZE = AudioRecord.getMinBufferSize(SAMPLE_RATE, CHANNEL_CONFIG, AUDIO_FORMAT);
+
+    private AudioRecord audioRecord;
+    private boolean isRecording = false;
+
+    public void startStreaming() {
+        if(isRecording){ return; }
+        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) { return; }
+
+        audioRecord = new AudioRecord(
+                MediaRecorder.AudioSource.MIC,
+                SAMPLE_RATE,
+                CHANNEL_CONFIG,
+                AUDIO_FORMAT,
+                BUFFER_SIZE
+        );
+
+        isRecording = true;
+        audioRecord.startRecording();
+
+        new Thread(() -> {
+            byte[] buffer = new byte[BUFFER_SIZE];
+            while (isRecording) {
+                int bytesRead = audioRecord.read(buffer, 0, BUFFER_SIZE);
+                if (bytesRead > 0) {
+                    // send audio data through nearby share
+                    sendAudioData((MainActivity) CONTEXT, buffer, bytesRead);
+                }
+            }
+        }).start();
+    }
+
+    public void stopStreaming(){
+        isRecording = false;
+        if(audioRecord != null){
+            audioRecord.stop();
+            audioRecord.release();
+        }
+    }
+
+    private void sendAudioData(MainActivity context, byte[] data, int length){
+        Payload payloadOfBytes = Payload.fromBytes(data);
+        for(String endpointId : connectedEndpointIds){
+            Nearby.getConnectionsClient(context).sendPayload(endpointId, payloadOfBytes);
+        }
+        //onDataRecieved("dummy_to_echo", data);
+    }
 }
 
 /*

@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.proxyverse.app-mergeDebugResources-44:/values-my/values-my.xml",
+            "outputFile": "com.example.proxyverse.app-mergeDebugResources-45:/values-my/values-my.xml",
             "map": [
                 {
                     "source": "C:\\Users\\Brandi Honnert\\.gradle\\caches\\transforms-3\\7bf998f9f4bdd84f156fbe08c4253964\\transformed\\material-1.11.0\\res\\values-my\\values-my.xml",

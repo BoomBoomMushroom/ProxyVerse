@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.proxyverse.app-mergeDebugResources-44:/values-v23/values-v23.xml",
+            "outputFile": "com.example.proxyverse.app-mergeDebugResources-45:/values-v23/values-v23.xml",
             "map": [
                 {
                     "source": "C:\\Users\\Brandi Honnert\\.gradle\\caches\\transforms-3\\019add5e771534bb68424657ad94cdee\\transformed\\cardview-1.0.0\\res\\values-v23\\values-v23.xml",

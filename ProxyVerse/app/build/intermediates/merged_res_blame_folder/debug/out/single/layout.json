@@ -1,18 +1,18 @@
 [
     {
-        "merged": "com.example.proxyverse.app-mergeDebugResources-45:/layout/fragment_second.xml",
-        "source": "com.example.proxyverse.app-main-48:/layout/fragment_second.xml"
+        "merged": "com.example.proxyverse.app-mergeDebugResources-46:/layout/content_main.xml",
+        "source": "com.example.proxyverse.app-main-49:/layout/content_main.xml"
     },
     {
-        "merged": "com.example.proxyverse.app-mergeDebugResources-45:/layout/activity_main.xml",
-        "source": "com.example.proxyverse.app-main-48:/layout/activity_main.xml"
+        "merged": "com.example.proxyverse.app-mergeDebugResources-46:/layout/activity_main.xml",
+        "source": "com.example.proxyverse.app-main-49:/layout/activity_main.xml"
     },
     {
-        "merged": "com.example.proxyverse.app-mergeDebugResources-45:/layout/fragment_first.xml",
-        "source": "com.example.proxyverse.app-main-48:/layout/fragment_first.xml"
+        "merged": "com.example.proxyverse.app-mergeDebugResources-46:/layout/fragment_second.xml",
+        "source": "com.example.proxyverse.app-main-49:/layout/fragment_second.xml"
     },
     {
-        "merged": "com.example.proxyverse.app-mergeDebugResources-45:/layout/content_main.xml",
-        "source": "com.example.proxyverse.app-main-48:/layout/content_main.xml"
+        "merged": "com.example.proxyverse.app-mergeDebugResources-46:/layout/fragment_first.xml",
+        "source": "com.example.proxyverse.app-main-49:/layout/fragment_first.xml"
     }
 ]

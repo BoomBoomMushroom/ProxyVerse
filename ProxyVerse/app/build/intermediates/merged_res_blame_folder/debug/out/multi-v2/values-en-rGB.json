@@ -1,7 +1,7 @@
 {
     "logs": [
         {
-            "outputFile": "com.example.proxyverse.app-mergeDebugResources-44:/values-en-rGB/values-en-rGB.xml",
+            "outputFile": "com.example.proxyverse.app-mergeDebugResources-45:/values-en-rGB/values-en-rGB.xml",
             "map": [
                 {
                     "source": "C:\\Users\\Brandi Honnert\\.gradle\\caches\\transforms-3\\9b6772ed109854c056cbeb2d6f5b455e\\transformed\\play-services-basement-18.1.0\\res\\values-en-rGB\\values.xml",
