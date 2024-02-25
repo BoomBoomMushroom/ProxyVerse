@@ -2,6 +2,7 @@ package com.example.proxyverse;
 
 import android.app.Activity;
 import android.app.AlertDialog;
+import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.pm.PackageManager;
@@ -79,6 +80,8 @@ public class MainActivity extends AppCompatActivity {
     private MediaPlayer mediaPlayer;
     private File tempAudioFile;
     private String userName = "Mario";
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
