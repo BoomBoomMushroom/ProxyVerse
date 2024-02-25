@@ -191,6 +191,7 @@ public class MainActivity extends AppCompatActivity {
                     // Automatically accept connection on both sides
                     connectedEndpointIds.add(endpointId);
                     Nearby.getConnectionsClient(CONTEXT).acceptConnection(endpointId, payloadCallback);
+                    onConnectionInitiatedOther(endpointId, connectionInfo);
                 }
 
                 @Override
@@ -286,8 +287,7 @@ public class MainActivity extends AppCompatActivity {
             };
 
     // When we get a connection!
-    //@Override
-    public void onConnectionInitiated(String endpointId, ConnectionInfo info) {
+    public void onConnectionInitiatedOther(String endpointId, ConnectionInfo info) {
         /*
         // Some alert code from: https://developers.google.com/nearby/connections/android/manage-connections
         new AlertDialog.Builder(CONTEXT_IGNORE_SECURITY)
@@ -377,7 +377,7 @@ public class MainActivity extends AppCompatActivity {
     private void sendAudioData(MainActivity context, byte[] data, int length){
         Payload payloadOfBytes = Payload.fromBytes(data);
         for(String endpointId : connectedEndpointIds){
-            Nearby.getConnectionsClient(context).sendPayload(endpointId, payloadOfBytes);
+            Nearby.getConnectionsClient(CONTEXT).sendPayload(endpointId, payloadOfBytes);
         }
         //onDataRecieved("dummy_to_echo", data);
     }
