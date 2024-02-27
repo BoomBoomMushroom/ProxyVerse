@@ -5,3 +5,5 @@ Android support links (Google why so serious):
 - https://developers.google.com/nearby/connections/overview
 - https://developers.google.com/nearby/connections/android/get-started
 - https://developers.google.com/android/guides/setup
+
+#For anyone question what this actually is, this is our RevolutionUC 2024 Hackathon hack submisison. Somehow this Java mess won most useless for adding Proximity Chat to real life.
